@@ -27,7 +27,7 @@ class CalculatePayableTime extends Command
     public function handle()
     {
         $filename = $this->argument('filename');
-        $driverDataService = new DriverDataService();
+        $driverDataService = app(DriverDataService::class);
         $driverDataService->calculatePayableTime($filename);
     }
 }

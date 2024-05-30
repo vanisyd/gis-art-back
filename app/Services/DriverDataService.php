@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Driver;
 use App\Models\DriverPayableTime;
 use App\Models\DriverTrip;
+use App\Repositories\DriverRepository;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class DriverDataService
 {
+    public function __construct(private readonly DriverRepository $driverRepository)
+    {
+    }
+
     /**
      * Imports driver trips data from the specified CSV file.
      * @param string|null $filename
@@ -36,13 +41,12 @@ class DriverDataService
             try {
                 $driverId = $line[1];
                 // Ensure the driver exists
-                Driver::firstOrCreate(['id' => $driverId]);
-                $driverTrip = new DriverTrip([
+                $this->driverRepository->createDriver(['id' => $driverId]);
+                $this->driverRepository->createDriverTrip([
                     'driver_id' => $driverId,
                     'pickup' => $line[2],
                     'dropoff' => $line[3]
                 ]);
-                $driverTrip->save();
                 $importedCount++;
             } catch (\Exception $e) {
                 Log::error("[Driver Data Service] Error importing row: " . $e->getMessage());
@@ -61,9 +65,7 @@ class DriverDataService
      */
     public function calculatePayableTime(string|null $filename = null): Collection
     {
-        $driverTrips = DriverTrip::query()
-            ->orderBy('pickup')
-            ->get();
+        $driverTrips = $this->driverRepository->getDriverTrips('pickup');
 
         // Group trips by driver and merge overlapping intervals
         $payableTime = [];
@@ -75,7 +77,7 @@ class DriverDataService
                 ];
             } else {
                 $lastInterval = &$payableTime[$driver_id][count($payableTime[$driver_id]) - 1];
-                if ($trip->pickup <= $lastInterval['dropoff']) {
+                if ($trip->pickup <= $lastInterval['dropoff'] && $trip->dropoff != $lastInterval['dropoff']) {
                     $lastInterval['dropoff'] = max($trip->dropoff, $lastInterval['dropoff']);
                 } else {
                     $payableTime[$driver_id][] = ['pickup' => $trip->pickup, 'dropoff' => $trip->dropoff];
@@ -113,8 +115,7 @@ class DriverDataService
         $file = fopen($filename, 'w');
         fputcsv($file, ['driver_id', 'total_minutes_with_passenger']);
         foreach ($totalTime as $driver_id => $value) {
-            fputcsv($file, [$driver_id, $value]);
-            $dbItem = DriverPayableTime::create([
+            $dbItem = $this->driverRepository->createDriverPayableTime([
                 'driver_id' => $driver_id,
                 'total_minutes_with_passenger' => $value
             ]);

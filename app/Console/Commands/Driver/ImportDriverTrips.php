@@ -28,7 +28,7 @@ class ImportDriverTrips extends Command
     public function handle(): void
     {
         $filename = $this->argument('filename');
-        $driverDataService = new DriverDataService();
+        $driverDataService = app(DriverDataService::class);
         try {
             $importedCount = $driverDataService->importDriverData($filename);
             $this->info("Imported {$importedCount} rows.");
