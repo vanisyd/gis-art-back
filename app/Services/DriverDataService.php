@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Driver;
+use App\Models\DriverPayableTime;
 use App\Models\DriverTrip;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -55,15 +57,16 @@ class DriverDataService
     /**
      * Calculates the payable time of drivers and saves the result to a CSV file.
      * @param string|null $filename
+     * @return Collection
      */
-    public function calculatePayableTime(string|null $filename = null): void
+    public function calculatePayableTime(string|null $filename = null): Collection
     {
-        $driverTrips = DB::table('driver_trips')
+        $driverTrips = DriverTrip::query()
             ->orderBy('pickup')
             ->get();
 
+        // Group trips by driver and merge overlapping intervals
         $payableTime = [];
-
         foreach ($driverTrips as $trip) {
             $driver_id = $trip->driver_id;
             if (!isset($payableTime[$driver_id])) {
@@ -75,21 +78,35 @@ class DriverDataService
                 if ($trip->pickup <= $lastInterval['dropoff']) {
                     $lastInterval['dropoff'] = max($trip->dropoff, $lastInterval['dropoff']);
                 } else {
-                    $payableTime[$driver_id][] =  ['pickup' => $trip->pickup, 'dropoff' => $trip->dropoff];
+                    $payableTime[$driver_id][] = ['pickup' => $trip->pickup, 'dropoff' => $trip->dropoff];
                 }
             }
         }
-
+        // Calculate total time with passenger for each driver
         $totalTime = [];
-
         foreach ($payableTime as $driver_id => $intervals) {
             $totalTime[$driver_id] = 0;
-            foreach($intervals as $interval) {
-                $totalTime[$driver_id] += strtotime($interval['dropoff']) - strtotime($interval['pickup']);
+            foreach ($intervals as $interval) {
+                $totalTime[$driver_id] += abs($interval['dropoff']->diffInSeconds($interval['pickup']));
             }
-            $totalTime[$driver_id] = $this->formatSecondsToTime($totalTime[$driver_id]);
+            $totalTime[$driver_id] = $this->formatSecondsToMinutes($totalTime[$driver_id]);
         }
 
+        //Export data
+        $data = $this->exportPayableTime($filename, $totalTime);
+
+        return $data;
+    }
+
+    /**
+     * @param string|null $filename
+     * @param array $totalTime
+     * @return Collection
+     */
+    private function exportPayableTime(string|null $filename = null, array $totalTime = []): Collection
+    {
+        DB::table('driver_payable_times')->truncate();
+        $data = collect();
         if ($filename === null) {
             $filename = $this->getOutputFilename();
         }
@@ -97,8 +114,15 @@ class DriverDataService
         fputcsv($file, ['driver_id', 'total_minutes_with_passenger']);
         foreach ($totalTime as $driver_id => $value) {
             fputcsv($file, [$driver_id, $value]);
+            $dbItem = DriverPayableTime::create([
+                'driver_id' => $driver_id,
+                'total_minutes_with_passenger' => $value
+            ]);
+            $data->push($dbItem);
         }
         fclose($file);
+
+        return $data;
     }
 
     private function getDataFilename(): string
@@ -111,12 +135,8 @@ class DriverDataService
         return config('services.driver-data.output_filename');
     }
 
-    private function formatSecondsToTime($total_seconds): string
+    private function formatSecondsToMinutes(float|int $driver_id): float
     {
-        $hours = floor($total_seconds / 3600);
-        $minutes = floor(($total_seconds / 60) % 60);
-        $seconds = $total_seconds % 60;
-
-        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        return round($driver_id / 60);
     }
 }

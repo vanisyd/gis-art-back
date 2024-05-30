@@ -18,7 +18,8 @@ class DriverTrip extends Model
     ];
 
     protected $casts = [
-        'pickup' => 'datetime'
+        'pickup' => 'datetime',
+        'dropoff' => 'datetime'
     ];
 
     public function driver(): BelongsTo
