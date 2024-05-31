@@ -136,8 +136,8 @@ class DriverDataService
         return config('services.driver-data.output_filename');
     }
 
-    private function formatSecondsToMinutes(float|int $driver_id): float
+    private function formatSecondsToMinutes(float|int $seconds): float
     {
-        return round($driver_id / 60);
+        return round($seconds / 60);
     }
 }
