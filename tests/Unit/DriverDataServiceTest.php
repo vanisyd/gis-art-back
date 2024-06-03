@@ -30,31 +30,49 @@ class DriverDataServiceTest extends TestCase
                     (object) [
                         'id' => 2,
                         'driver_id' => 1,
-                        'pickup' => Carbon::parse('2022-01-01 09:40:00'),
-                        'dropoff' => Carbon::parse('2022-01-01 11:00:00')
+                        'pickup' => Carbon::parse('2024-01-01T10:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T12:00:00.000000Z')
                     ],
                     (object) [
                         'id' => 1,
                         'driver_id' => 1,
-                        'pickup' => Carbon::parse('2022-01-01 10:00:00'),
-                        'dropoff' => Carbon::parse('2022-01-01 11:00:00')
+                        'pickup' => Carbon::parse('2024-01-01T13:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T15:00:00.000000Z')
                     ],
                     (object) [
                         'id' => 4,
                         'driver_id' => 2,
-                        'pickup' => Carbon::parse('2022-01-01 10:00:00'),
-                        'dropoff' => Carbon::parse('2022-01-01 11:00:00')
+                        'pickup' => Carbon::parse('2024-01-01T10:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T18:00:00.000000Z')
+                    ],
+                    (object) [
+                        'id' => 4,
+                        'driver_id' => 2,
+                        'pickup' => Carbon::parse('2024-01-01T10:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T18:00:00.000000Z')
                     ],
                     (object) [
                         'id' => 3,
                         'driver_id' => 2,
-                        'pickup' => Carbon::parse('2022-01-01 11:30:00'),
-                        'dropoff' => Carbon::parse('2022-01-01 12:30:00')
+                        'pickup' => Carbon::parse('2024-01-01T13:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T15:00:00.000000Z')
+                    ],
+                    (object) [
+                        'id' => 3,
+                        'driver_id' => 2,
+                        'pickup' => Carbon::parse('2024-01-01T17:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T18:00:00.000000Z')
+                    ],
+                    (object) [
+                        'id' => 3,
+                        'driver_id' => 2,
+                        'pickup' => Carbon::parse('2024-01-01T17:00:00.000000Z'),
+                        'dropoff' => Carbon::parse('2024-01-01T19:00:00.000000Z')
                     ],
                 ],
                 [
-                    ['driver_id' => 1, 'total_minutes_with_passenger' => 140],
-                    ['driver_id' => 2, 'total_minutes_with_passenger' => 120]
+                    ['driver_id' => 1, 'total_minutes_with_passenger' => 240],
+                    ['driver_id' => 2, 'total_minutes_with_passenger' => 540]
                 ]
             ],
         ];

@@ -77,9 +77,9 @@ class DriverDataService
                 ];
             } else {
                 $lastInterval = &$payableTime[$driver_id][count($payableTime[$driver_id]) - 1];
-                if ($trip->pickup <= $lastInterval['dropoff'] && $trip->dropoff != $lastInterval['dropoff']) {
-                    $lastInterval['dropoff'] = max($trip->dropoff, $lastInterval['dropoff']);
-                } else {
+                if ($trip->pickup < $lastInterval['dropoff'] && $trip->dropoff > $lastInterval['dropoff']) {
+                    $lastInterval['dropoff'] = $trip->dropoff;
+                } else if ($trip->pickup >= $lastInterval['dropoff']) {
                     $payableTime[$driver_id][] = ['pickup' => $trip->pickup, 'dropoff' => $trip->dropoff];
                 }
             }
